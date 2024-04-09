@@ -54,7 +54,7 @@ void PatchApplicationAction::EndSourceFileAction() {
 
 std::unique_ptr<ASTConsumer> PatchApplicationAction::CreateASTConsumer(CompilerInstance &CI, StringRef file) {
     TheRewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
-    return llvm::make_unique<PatchApplicationASTConsumer>(TheRewriter);
+    return std::make_unique<PatchApplicationASTConsumer>(TheRewriter);
 }
 
 

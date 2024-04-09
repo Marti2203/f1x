@@ -38,7 +38,7 @@ using namespace ast_matchers;
 static bool alreadyTransformed = false;
 static std::unordered_set<Location> alreadyMatched;
 
-bool ProfileInstrumentationAction::BeginSourceFileAction(CompilerInstance &CI, StringRef Filename) {
+bool ProfileInstrumentationAction::BeginSourceFileAction(CompilerInstance &CI) {
   if (alreadyTransformed) {
     return false;
   }
@@ -65,7 +65,7 @@ void ProfileInstrumentationAction::EndSourceFileAction() {
 
 std::unique_ptr<ASTConsumer> ProfileInstrumentationAction::CreateASTConsumer(CompilerInstance &CI, StringRef file) {
     TheRewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
-    return llvm::make_unique<ProfileInstrumentationASTConsumer>(TheRewriter);
+    return std::make_unique<ProfileInstrumentationASTConsumer>(TheRewriter);
 }
 
 

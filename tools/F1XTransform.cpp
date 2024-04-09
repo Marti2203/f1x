@@ -92,7 +92,7 @@ Patch("patch", cl::desc("replacement"), cl::cat(F1XCategory));
 
 
 int main(int argc, const char **argv) {
-  CommonOptionsParser OptionsParser(argc, argv, F1XCategory);
+  CommonOptionsParser& OptionsParser = CommonOptionsParser::create(argc, argv, F1XCategory).get();
   ClangTool Tool(OptionsParser.getCompilations(),
                  OptionsParser.getSourcePathList());
 

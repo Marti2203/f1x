@@ -1,5 +1,7 @@
 ![logo](doc/logo.png)
 
+# THIS VERSION DOES NOT HAVE LOCALIZATION
+
 f1x [ɛf-wʌn-ɛks] is a test-driven patch generation engine for C/C++ programs. It automatically finds and fixes software bugs by analyzing behaviour of passing and failing tests. f1x aims to be efficient, robust and easy-to-use.
 
 ## How does it work? ##

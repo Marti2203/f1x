@@ -14,14 +14,18 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM mechtaev/ubuntu-16.04-llvm-3.8.1
-MAINTAINER mechtaev@gmail.com
+FROM ubuntu:22.04
+LABEL MAINTAINER="Martin Mirchev<mirchevmartin2203@gmail.com>"
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get upgrade -y && apt-get autoremove -y
 
-RUN apt-get install -y build-essential cmake gcovr zlib1g-dev libtinfo-dev python
-RUN apt-get install -y libboost-filesystem-dev libboost-program-options-dev libboost-log-dev
+RUN apt-get install -y build-essential cmake gcovr zlib1g-dev libtinfo-dev python3 python3-pip clang
+RUN apt-get install -y llvm-15* clang-15 bear libear libclang-15-dev zlib* nano rapidjson-dev libboost-filesystem-dev libboost-program-options-dev libboost-log-dev
+
+# Add some
+RUN ln -s /usr/bin/clang-15 /usr/bin/clang
+RUN ln -s /usr/bin/clang++-15 /usr/bin/clang++
 
 ADD CMakeLists.txt /f1x/
 ADD Config.h.in /f1x/
@@ -32,7 +36,7 @@ ADD tools /f1x/tools
 ADD transform /f1x/transform
 
 RUN mkdir /f1x/build && cd /f1x/build \
-    && cmake .. -DF1X_LLVM=/llvm-3.8.1 \
+    && cmake .. \
     && make
 
 ENV PATH="/f1x/build/tools:${PATH}"

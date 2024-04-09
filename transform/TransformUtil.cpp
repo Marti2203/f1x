@@ -23,6 +23,7 @@
 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/ParentMapContext.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include "TransformUtil.h"
@@ -74,12 +75,12 @@ bool inRange(unsigned line) {
 
 
 unsigned getDeclExpandedLine(const Decl* decl, SourceManager &srcMgr) {
-  SourceLocation startLoc = decl->getLocStart();
+  SourceLocation startLoc = decl->getBeginLoc();
   if(startLoc.isMacroID()) {
     // Get the start/end expansion locations
-    pair<SourceLocation, SourceLocation> expansionRange = srcMgr.getExpansionRange(startLoc);
+    clang::CharSourceRange expansionRange = srcMgr.getExpansionRange(startLoc);
     // We're just interested in the start location
-    startLoc = expansionRange.first;
+    startLoc = expansionRange.getBegin();
   }
 
   return srcMgr.getExpansionLineNumber(startLoc);
@@ -87,8 +88,8 @@ unsigned getDeclExpandedLine(const Decl* decl, SourceManager &srcMgr) {
 
 
 bool insideMacro(const Stmt* expr, SourceManager &srcMgr, const LangOptions &langOpts) {
-  SourceLocation startLoc = expr->getLocStart();
-  SourceLocation endLoc = expr->getLocEnd();
+  SourceLocation startLoc = expr->getBeginLoc();
+  SourceLocation endLoc = expr->getEndLoc();
 
   if(startLoc.isMacroID() && !Lexer::isAtStartOfMacroExpansion(startLoc, srcMgr, langOpts))
     return true;
@@ -126,12 +127,12 @@ bool intersectConditionalPP(const Stmt* stmt,
       EXPR_END
       #endif
      */
-    if ((isBefore(stmt->getLocStart(), range.getBegin()) &&
-         isBefore(range.getBegin(), stmt->getLocEnd()) &&
-         isBefore(stmt->getLocEnd(), range.getEnd())) || 
-        (isBefore(range.getBegin(), stmt->getLocStart()) && 
-         isBefore(stmt->getLocStart(), range.getEnd()) && 
-         isBefore(range.getEnd(), stmt->getLocEnd()))) {
+    if ((isBefore(stmt->getBeginLoc(), range.getBegin()) &&
+         isBefore(range.getBegin(), stmt->getEndLoc()) &&
+         isBefore(stmt->getEndLoc(), range.getEnd())) || 
+        (isBefore(range.getBegin(), stmt->getBeginLoc()) && 
+         isBefore(stmt->getBeginLoc(), range.getEnd()) && 
+         isBefore(range.getEnd(), stmt->getEndLoc()))) {
       return true;
     }
   }
@@ -141,20 +142,20 @@ bool intersectConditionalPP(const Stmt* stmt,
 
 
 SourceRange getExpandedLoc(const Stmt* expr, SourceManager &srcMgr) {
-  SourceLocation startLoc = expr->getLocStart();
-  SourceLocation endLoc = expr->getLocEnd();
+  SourceLocation startLoc = expr->getBeginLoc();
+  SourceLocation endLoc = expr->getEndLoc();
 
   if(startLoc.isMacroID()) {
     // Get the start/end expansion locations
-    pair<SourceLocation, SourceLocation> expansionRange = srcMgr.getExpansionRange(startLoc);
+    clang::CharSourceRange expansionRange = srcMgr.getExpansionRange(startLoc);
     // We're just interested in the start location
-    startLoc = expansionRange.first;
+    startLoc = expansionRange.getBegin();
   }
   if(endLoc.isMacroID()) {
     // Get the start/end expansion locations
-    pair<SourceLocation, SourceLocation> expansionRange = srcMgr.getExpansionRange(endLoc);
+    clang::CharSourceRange expansionRange = srcMgr.getExpansionRange(endLoc);
     // We're just interested in the start location
-    endLoc = expansionRange.second; // TODO: I am not sure about it
+    endLoc = expansionRange.getEnd(); // TODO: I am not sure about it
   }
       
   SourceRange expandedLoc(startLoc, endLoc);
@@ -193,7 +194,7 @@ bool overwriteMainChangedFile(Rewriter &TheRewriter) {
   std::error_code err_code;
   auto buffer = TheRewriter.getRewriteBufferFor(id);
   if (buffer) {// if there are modifications
-    raw_fd_ostream out(Entry->getName(), err_code, sys::fs::F_None);
+    raw_fd_ostream out(Entry->getName(), err_code, sys::fs::OF_None);
     buffer->write(out);
     out.close();
   }
@@ -413,7 +414,7 @@ public:
     string t = clangKindToString(getBuiltinKind(Node->getType()));
     node.AddMember("rawType", json::Value().SetString(t.c_str(), *allocator), *allocator);
     json::Value repr;
-    string opcode_str = UnaryOperator::getOpcodeStr(Node->getOpcode());
+    string opcode_str = UnaryOperator::getOpcodeStr(Node->getOpcode()).str();
     repr.SetString(opcode_str.c_str(), *allocator);
     node.AddMember("repr", repr, *allocator);
 
@@ -684,14 +685,14 @@ json::Value varDeclToJSON(VarDecl *vd, json::Document::AllocatorType &allocator)
     node.AddMember("rawType", json::Value().SetString(t.c_str(), allocator), allocator);
   }
   json::Value repr;
-  string name = vd->getName();
+  string name = vd->getName().str();
   repr.SetString(name.c_str(), allocator);
   node.AddMember("repr", repr, allocator);
   return node;
 }
 
 
-vector<json::Value> collectVisible(const ast_type_traits::DynTypedNode &node,
+vector<json::Value> collectVisible(const DynTypedNode &node,
                                    unsigned line,
                                    ASTContext* context,
                                    json::Document::AllocatorType &allocator) {
@@ -711,7 +712,7 @@ vector<json::Value> collectVisible(const ast_type_traits::DynTypedNode &node,
     if (cfg.useGlobalVariables) {
       auto parents = context->getParents(node);
       if (parents.size() > 0) {
-        const ast_type_traits::DynTypedNode parent = *(parents.begin()); // FIXME: for now only first
+        const DynTypedNode parent = *(parents.begin()); // FIXME: for now only first
         const TranslationUnitDecl* tu;
         if ((tu = parent.get<TranslationUnitDecl>()) != NULL) {
           for (auto it = tu->decls_begin(); it != tu->decls_end(); ++it) {
@@ -799,7 +800,7 @@ vector<json::Value> collectVisible(const ast_type_traits::DynTypedNode &node,
     
     auto parents = context->getParents(node);
     if (parents.size() > 0) {
-      const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
+      const DynTypedNode parent = *(parents.begin()); // TODO: for now only first
       vector<json::Value> parentResult = collectVisible(parent, line, context, allocator);
       for (auto &c : parentResult) {
         result.push_back(std::move(c));
@@ -817,7 +818,7 @@ vector<json::Value> collectComponents(const Stmt *stmt,
                                       json::Document::AllocatorType &allocator) {
   vector<json::Value> fromExpr = collectFromExpression(stmt, allocator, false, false);
 
-  const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*stmt);
+  const DynTypedNode node = DynTypedNode::create(*stmt);
   vector<json::Value> visible = collectVisible(node, line, context, allocator);
 
   vector<json::Value> result;

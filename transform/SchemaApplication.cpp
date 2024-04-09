@@ -73,7 +73,7 @@ bool isInterestingLocation(unsigned fileId, unsigned beginLine, unsigned beginCo
 static bool alreadyTransformed = false;
 static std::unordered_set<Location> alreadyMatched;
 
-bool SchemaApplicationAction::BeginSourceFileAction(CompilerInstance &CI, StringRef Filename) {
+bool SchemaApplicationAction::BeginSourceFileAction(CompilerInstance &CI) {
   if (alreadyTransformed) {
     return false;
   }
@@ -102,7 +102,7 @@ void SchemaApplicationAction::EndSourceFileAction() {
 
 std::unique_ptr<ASTConsumer> SchemaApplicationAction::CreateASTConsumer(CompilerInstance &CI, StringRef file) {
     TheRewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
-    return llvm::make_unique<SchemaApplicationASTConsumer>(TheRewriter);
+    return std::make_unique<SchemaApplicationASTConsumer>(TheRewriter);
 }
 
 

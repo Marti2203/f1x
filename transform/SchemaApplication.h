@@ -70,7 +70,7 @@ class SchemaApplicationAction : public ASTFrontendAction {
 public:
   SchemaApplicationAction() {}
 
-  bool BeginSourceFileAction(CompilerInstance &CI, StringRef Filename) override;
+  bool BeginSourceFileAction(CompilerInstance &CI) override;
 
   void EndSourceFileAction() override;
 

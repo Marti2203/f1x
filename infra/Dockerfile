@@ -14,14 +14,12 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM ubuntu:16.04
-MAINTAINER mechtaev@gmail.com
+FROM ubuntu:22.04
+LABEL MAINTAINER="mirchevmartin2203@gmail.com"
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get upgrade -y && apt-get autoremove -y
 
 RUN apt-get install -y build-essential make cmake ninja-build wget python2.7
 
-ADD download_build_install_llvm.sh /root
-
-RUN mkdir /llvm-3.8.1 && cd /llvm-3.8.1 && /root/download_build_install_llvm.sh
+RUN apt-get install -y llvm-15* clang-15 bear libear libclang-15-dev zlib* nano rapidjson-dev libboost-filesystem-dev libboost-program-options-dev libboost-log-dev

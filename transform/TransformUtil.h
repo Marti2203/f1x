@@ -19,7 +19,7 @@
 #pragma once
 
 #include <memory>
-
+#include <vector>
 #include "clang/AST/AST.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Lex/PPCallbacks.h"

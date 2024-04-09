@@ -71,7 +71,7 @@ class ProfileInstrumentationAction : public ASTFrontendAction {
 public:
   ProfileInstrumentationAction(){}
 
-  bool BeginSourceFileAction(CompilerInstance &CI, StringRef Filename) override;
+  bool BeginSourceFileAction(CompilerInstance &CI) override;
   void EndSourceFileAction() override;
 
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef file) override;

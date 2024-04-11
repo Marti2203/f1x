@@ -20,12 +20,14 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get upgrade -y && apt-get autoremove -y
 
-RUN apt-get install -y build-essential cmake gcovr zlib1g-dev libtinfo-dev python3 python3-pip clang
+RUN apt-get install -y build-essential cmake gcovr zlib1g-dev libtinfo-dev python3 python3-pip 
 RUN apt-get install -y llvm-15* clang-15 bear libear libclang-15-dev zlib* nano rapidjson-dev libboost-filesystem-dev libboost-program-options-dev libboost-log-dev
 
 # Add some
 RUN ln -s /usr/bin/clang-15 /usr/bin/clang
 RUN ln -s /usr/bin/clang++-15 /usr/bin/clang++
+
+RUN apt-get install -y python-is-python3
 
 ADD CMakeLists.txt /f1x/
 ADD Config.h.in /f1x/

@@ -92,9 +92,9 @@ Patch("patch", cl::desc("replacement"), cl::cat(F1XCategory));
 
 
 int main(int argc, const char **argv) {
-  CommonOptionsParser& OptionsParser = CommonOptionsParser::create(argc, argv, F1XCategory).get();
-  ClangTool Tool(OptionsParser.getCompilations(),
-                 OptionsParser.getSourcePathList());
+  llvm::Expected<CommonOptionsParser> OptionsParser = CommonOptionsParser::create(argc, argv, F1XCategory);
+  ClangTool Tool(OptionsParser->getCompilations(),
+                 OptionsParser->getSourcePathList());
 
   std::unique_ptr<FrontendActionFactory> FrontendFactory;
 
